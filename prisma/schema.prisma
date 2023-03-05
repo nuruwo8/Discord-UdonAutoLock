@@ -1,0 +1,43 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:../main.db?connection_limit=1"
+}
+
+model VrcNameList {
+  guildId         String @map("guild_id")
+  guildName       String @map("guild_name")
+  userId          String @map("user_id")
+  userName        String @map("user_name")
+  vrcName         String @map("vrc_name")
+  changeRemaining Int    @map("change_remaining")
+  lastChangeDay   String @map("last_change_day")
+
+  @@id([guildId, userId])
+  @@map("vrc_name_list")
+}
+
+model TextLinks {
+  guildId    String @id @map("guild_id")
+  guildName  String @map("guild_name")
+  fileName   String @unique @map("fileName")
+  textLink   String @unique @map("text_link")
+  createDate String @map("create_date")
+  updateDate String @map("update_date")
+
+  @@map("text_links")
+}
+
+model Setting {
+  guildId                  String @id @map("guild_id")
+  guildName                String @map("guild_name")
+  vrcNameChangeLimitPerDay Int    @map("vrc_name_change_limit_per_day")
+
+  @@map("setting")
+}

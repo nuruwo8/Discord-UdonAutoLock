@@ -1,0 +1,13 @@
+[Unit]
+Description = discord-bot service
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec = 10
+ExecStart= /opt/udon-auto-lock.sh
+
+[Install]
+WantedBy=multi-user.target
