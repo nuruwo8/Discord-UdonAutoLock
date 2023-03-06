@@ -127,9 +127,7 @@ export class Database {
    }
 
    /**
-    * Check For regist VRChat name.
-    * If user use first push of generate button.Regist name as '0'
-    * '0' User can valid DM(For name regist)to bot. *
+    * Regist VRChat name. new or update.
     * @param userId
     * @param userName
     * @returns

@@ -13,7 +13,6 @@ import { Firebase } from '@/src/mod/firebase_storage';
    process.on('uncaughtException', (err) => {
       if (err.name.startsWith('DiscordAPIError[50013]')) {
          //discord permission error. but not fatal error.
-         //user can fix permissions and post '!button' command to new Token generate button.
          const msg = err.name + ' Missing Permissions.';
          console.warn(err);
          operation.warn(msg);

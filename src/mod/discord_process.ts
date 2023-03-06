@@ -1,4 +1,4 @@
-import { Client, SlashCommandBuilder, PermissionFlagsBits, GatewayIntentBits, Partials, ChatInputCommandInteraction, Guild, Collection, GuildMember } from 'discord.js';
+import { Client, SlashCommandBuilder, PermissionFlagsBits, GatewayIntentBits, ChatInputCommandInteraction, Guild, Collection, GuildMember } from 'discord.js';
 import { SettingAdapter, GLOBAL_SETTING } from '@/src/mod/setting_adapter';
 import { Database } from '@/src/mod/database';
 import * as fs from 'node:fs';
@@ -38,23 +38,17 @@ export class DiscordProcess {
    guildsRefreshCounter: GuildsRefreshCounter = {};
    botUserId: string;
    MAX_BOT_ROLE_NUM = 8;
-   MAX_MEMBER_NUM = 5000;
+   MAX_MEMBER_NUM = 3000;
    TOKEN_REFRESH_INTERVAL_COUNT = Math.trunc(GLOBAL_SETTING.GENERAL.TOKEN_EXPIRE_PERIOD_SEC / GLOBAL_SETTING.GENERAL.DATA_UPDATE_CHECK_INTERVAL_SEC / 3 - 1);
 
    //----------------------constructor. initialize and regist events-------------------------
    constructor(private db: Database, private setting: SettingAdapter, private firebase: Firebase) {
       this.botUserId = '';
       this.bot = new Client({
-         intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers, GatewayIntentBits.DirectMessages],
-         partials: [
-            Partials.Channel, // Required to receive DMs
-         ],
+         intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers],
       });
 
       // -----------------------------process when launch bot----------------------
-      /** On launch, Bot clear old self message.
-       *  Bot create new Token button where each registed channels.
-       */
       this.bot.once('ready', async () => {
          if (this.bot.user != null) {
             this.botUserId = this.bot.user.id;
@@ -254,7 +248,7 @@ export class DiscordProcess {
       //update is true.
       this.guildsUpdateFlag[guildId] = false; //force false;
       console.log('updateTextGuildStart: ' + guildName);
-      const startTime = performance.now(); // 開始時間
+      const startTime = performance.now(); // start stop watch
       const textDataInfo = await this.getTextInfomations(guild);
       console.log(textDataInfo);
       let textBytes = this.makeTextBytes(textDataInfo);
@@ -280,9 +274,9 @@ export class DiscordProcess {
       const uploadResult = await this.firebase.writeFireBaseFile(guildId, guildName, dataWithToken);
 
       // end
-      const endTime = performance.now(); // 終了時間
+      const endTime = performance.now(); // stop stop watch
       console.log('updateTextGuildEnd: ' + guildName);
-      console.log('updateTime: ' + (endTime - startTime) + '[msec]'); // 何ミリ秒かかったかを表示する
+      console.log('updateTime: ' + (endTime - startTime) + '[msec]'); // display process time
       if (!uploadResult) {
          //next period retry upload
          this.guildsUpdateFlag[guildId] = true;
@@ -610,37 +604,33 @@ export class DiscordProcess {
     * Set slash command for discord
     */
    private async setCommands() {
-      //const DEV_GUILD_ID = '963254367983644713';
-      await this.bot.application?.commands.set(
-         [
-            //all members commands
-            new SlashCommandBuilder()
-               .setName('set_vrc_name')
-               .setDescription('Set or Change your VRChat Display name.')
-               .addStringOption((option) => option.setName('vrc_name').setDescription('Your VRChat display name').setRequired(true)),
-            new SlashCommandBuilder().setName('get_vrc_name').setDescription('Get your VRChat Display name.'),
-            //administrator commands
-            new SlashCommandBuilder().setName('get_bot_role').setDescription('Get role name, used to pass').setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
-            new SlashCommandBuilder().setName('get_unlock_link').setDescription('Get unlock link URL for world gimic').setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
-            new SlashCommandBuilder().setName('get_public_key').setDescription('Get public key for world gimic').setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
-            new SlashCommandBuilder()
-               .setName('set_vrc_name_change_limit')
-               .setDescription('Set limit times that changing VRChat Display name per day.')
-               .addStringOption((option) => option.setName('limit_times').setDescription('Change limit times').setRequired(true))
-               .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
-            new SlashCommandBuilder()
-               .setName('relimit_vrc_name_change')
-               .setDescription('Reset limit that changing VRChat Display name per day by user name.')
-               .addStringOption((option) => option.setName('user_name').setDescription('User name with #number').setRequired(true))
-               .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
-            new SlashCommandBuilder()
-               .setName('clear_limit_vrc_name_change')
-               .setDescription('Reset limit that changing VRChat Display name per day to all member.')
-               .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
-            new SlashCommandBuilder().setName('get_setting').setDescription('Get setting of this bot where this guild.').setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
-         ]
-         //DEV_GUILD_ID
-      );
+      await this.bot.application?.commands.set([
+         //all members commands
+         new SlashCommandBuilder()
+            .setName('set_vrc_name')
+            .setDescription('Set or Change your VRChat Display name.')
+            .addStringOption((option) => option.setName('vrc_name').setDescription('Your VRChat display name').setRequired(true)),
+         new SlashCommandBuilder().setName('get_vrc_name').setDescription('Get your VRChat Display name.'),
+         //administrator commands
+         new SlashCommandBuilder().setName('get_bot_role').setDescription('Get role name, used to pass').setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+         new SlashCommandBuilder().setName('get_unlock_link').setDescription('Get unlock link URL for world gimic').setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+         new SlashCommandBuilder().setName('get_public_key').setDescription('Get public key for world gimic').setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+         new SlashCommandBuilder()
+            .setName('set_vrc_name_change_limit')
+            .setDescription('Set limit times that changing VRChat Display name per day.')
+            .addStringOption((option) => option.setName('limit_times').setDescription('Change limit times').setRequired(true))
+            .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+         new SlashCommandBuilder()
+            .setName('relimit_vrc_name_change')
+            .setDescription('Reset limit that changing VRChat Display name per day by user name.')
+            .addStringOption((option) => option.setName('user_name').setDescription('User name with #number').setRequired(true))
+            .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+         new SlashCommandBuilder()
+            .setName('clear_limit_vrc_name_change')
+            .setDescription('Reset limit that changing VRChat Display name per day to all member.')
+            .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+         new SlashCommandBuilder().setName('get_setting').setDescription('Get setting of this bot where this guild.').setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+      ]);
    }
    //----------------------Command process functions-------------------------
 

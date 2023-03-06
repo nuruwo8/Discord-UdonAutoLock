@@ -25,6 +25,8 @@ Run on Node.js.
    -  `settings/private/discord_token.txt`
 
       Just write your discord bot token string.
+      Discord bot need SERVER MEMBERS INTENT.
+      ![image](/documents/images/bot_intent.png)
 
    -  `settings/setting.json`
 
@@ -32,7 +34,7 @@ Run on Node.js.
 
       It is OK if the file structure is like this
 
-      ![image](/documents/settingsPath.png)
+      ![image](/documents/images/settingsPath.png)
 
 #### Run (development)
 

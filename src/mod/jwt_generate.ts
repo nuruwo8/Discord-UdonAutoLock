@@ -15,7 +15,7 @@ export function getJwtToken(dataHash: string, exp: number): string {
       iat: nowUnixTime,
    };
    const jwtOptions: jwt.SignOptions = {
-      expiresIn: exp, //expiresIn unit is seconds (* 60 means convert minutes to seconds)
+      expiresIn: exp, //expiresIn unit is seconds.
       algorithm: 'RS256',
    };
    //generate jwt token
