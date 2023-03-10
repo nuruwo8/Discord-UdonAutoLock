@@ -108,6 +108,9 @@ export class DiscordProcess {
                case 'clear_limit_vrc_name_change':
                   await this.clearVrcNameChangeRemaining(interaction);
                   break;
+               case 'get_vrc_name_log':
+                  await this.sendVrcNameLog(interaction);
+                  break;
             }
          }
       });
@@ -630,6 +633,7 @@ export class DiscordProcess {
             .setDescription('Reset limit that changing VRChat Display name per day to all member.')
             .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
          new SlashCommandBuilder().setName('get_setting').setDescription('Get setting of this bot where this guild.').setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+         new SlashCommandBuilder().setName('get_vrc_name_log').setDescription('Get member registration history of VRChat name').setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
       ]);
    }
    //----------------------Command process functions-------------------------
@@ -711,6 +715,16 @@ export class DiscordProcess {
       } else {
          await interaction.reply({ content: 'You are not registered yet.\nPlese command "set_vrc_name" to regist.', ephemeral: true });
       }
+   }
+
+   async sendVrcNameLog(interaction: ChatInputCommandInteraction) {
+      const guildId = interaction.guildId!;
+      const guildName = interaction.guild!.name;
+      const userName = interaction.user.tag;
+
+      const logPath = log.getVrcNameLogPath(guildId);
+      await interaction.reply({ content: 'This is vrchat name log of your guild.', files: [logPath] });
+      this.db.logNonTargetCommand(guildId, 'get_vrc_name_log', userName, guildName, '-');
    }
 
    async sendBotRole(interaction: ChatInputCommandInteraction) {

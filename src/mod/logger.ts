@@ -90,12 +90,12 @@ function makeChannelLogPathAndFiles(guildId: string) {
    }
 }
 
-function getCommandLogPath(guildId: string): string {
-   return path.resolve('logs', 'guilds', guildId) + '/command_log.csv';
+export function getVrcNameLogPath(guildId: string): string {
+   return path.resolve('logs', 'guilds', guildId) + '/vrc_name_log.csv';
 }
 
-function getVrcNameLogPath(guildId: string): string {
-   return path.resolve('logs', 'guilds', guildId) + '/vrc_name_log.csv';
+function getCommandLogPath(guildId: string): string {
+   return path.resolve('logs', 'guilds', guildId) + '/command_log.csv';
 }
 
 function getTextLogPath(guildId: string): string {
