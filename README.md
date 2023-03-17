@@ -4,7 +4,7 @@ This is the Discord bot program of Udon Auto Lock.
 
 https://booth.pm/ja/items/4590105
 
-You can use your own bot in this repository.
+You can use your own bot in this repository.  
 The bot runs on Node.js.
 
 ### Project launch
