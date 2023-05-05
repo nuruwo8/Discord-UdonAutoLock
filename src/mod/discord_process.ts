@@ -249,6 +249,7 @@ export class DiscordProcess {
       const update = this.checkTokenRefresh(guildId, this.guildsUpdateFlag[guildId]);
       if (!update) return; //no update
       //update is true.
+      await guild.members.fetch(); //get members information
       this.guildsUpdateFlag[guildId] = false; //force false;
       console.log('updateTextGuildStart: ' + guildName);
       const startTime = performance.now(); // start stop watch
