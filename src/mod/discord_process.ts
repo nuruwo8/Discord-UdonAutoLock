@@ -359,15 +359,31 @@ export class DiscordProcess {
       const guildId = guild.id;
       //get bot roles
       const botRoleNames = this.getMemberAttachedRoleNames(guildId, this.botUserId);
-      if (botRoleNames.length == 0 || botRoleNames.length > this.MAX_BOT_ROLE_NUM) return textDataInfo; //no or over bot role num
+      if (botRoleNames.length == 0 || botRoleNames.length > this.MAX_BOT_ROLE_NUM) {
+         const message = guild.name + ': no or over bot role num';
+         console.log(message);
+         log.operation.info(message);
+         return textDataInfo;
+      }
+
       //get vrc name registed users
       //key is userId, value is hashVrcname
       const { registedMembers, registedIds } = await this.db.getAllMembersVrcName(guildId);
-      if (registedIds.length == 0 || registedIds.length > this.MAX_MEMBER_NUM) return textDataInfo; //no or over vrc name regist user.
+      if (registedIds.length == 0 || registedIds.length > this.MAX_MEMBER_NUM) {
+         const message = guild.name + ': no or over vrc name regist user.';
+         console.log(message);
+         log.operation.info(message);
+         return textDataInfo;
+      }
 
       //extract users who bot role and VRC name with bitfield.
       const { userIds, roleBitFields } = this.extractTargetMembers(guildId, guild.members.cache, botRoleNames, registedIds);
-      if (userIds.length == 0) return textDataInfo; // no target member
+      if (userIds.length == 0) {
+         const message = guild.name + ': no target member.';
+         console.log(message);
+         log.operation.info(message);
+         return textDataInfo;
+      }
 
       //get randomSalt
       const randomSalt = crypto.randomBytes(4).readUInt32BE(0);
