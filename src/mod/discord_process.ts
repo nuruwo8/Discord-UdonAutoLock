@@ -684,18 +684,20 @@ export class DiscordProcess {
       const result = await this.db.vrcNameRegist(guildId, guildName, userId, userName, inputVrcNameTrimmed);
       const setting = await this.setting.getGuildSetting(guildId);
       const vrcNameChangeLimitPerDay = setting.vrcNameChangeLimitPerDay;
+      //Replace Discord's decorative characters with real symbols
+      const displayVrcName = this.replaceDecorativeCharactersToSymbol(inputVrcNameTrimmed);
 
       //reply
       let msg = '';
       switch (result) {
          case 'REGISTERED':
-            msg = 'Thanks you! I registered to "' + inputVrcNameTrimmed + '" as your VRChat display name.';
+            msg = 'Thanks you! I registered to "' + displayVrcName + '" as your VRChat display name.';
             if (vrcNameChangeLimitPerDay > 0) {
                msg += '\n(You can change your display name until ' + vrcNameChangeLimitPerDay + ' times per day)';
             }
             break;
          case 'CHANGED':
-            msg = 'Thanks you! I changed to "' + inputVrcNameTrimmed + '" as your display name.';
+            msg = 'Thanks you! I changed to "' + displayVrcName + '" as your display name.';
             if (vrcNameChangeLimitPerDay > 0) {
                msg += '\n(You can change your display name until ' + vrcNameChangeLimitPerDay + ' times per day)';
             }
@@ -709,7 +711,7 @@ export class DiscordProcess {
             }
             break;
          case 'SAME_VRC_NAME':
-            msg = '**Registration failed**\n"' + inputVrcNameTrimmed + '" is same of registered.';
+            msg = '**Registration failed**\n"' + displayVrcName + '" is same of registered.';
             break;
          case 'ERROR': //unkwnon error
             msg = '**Registration failed**\nUnkwnon error.';
@@ -721,6 +723,11 @@ export class DiscordProcess {
          const update = this.checkUpdateFlagWhenVrcNameChange(guildId, userId);
          this.setUpdateFlag(guildId, update);
       }
+   }
+
+   private replaceDecorativeCharactersToSymbol(input: string): string {
+      let result = input.replace(`_`, '\_');
+      return result;
    }
 
    async getVrcName(interaction: ChatInputCommandInteraction) {
