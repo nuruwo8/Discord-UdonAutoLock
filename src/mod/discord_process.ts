@@ -684,20 +684,19 @@ export class DiscordProcess {
       const result = await this.db.vrcNameRegist(guildId, guildName, userId, userName, inputVrcNameTrimmed);
       const setting = await this.setting.getGuildSetting(guildId);
       const vrcNameChangeLimitPerDay = setting.vrcNameChangeLimitPerDay;
-      //Replace Discord's decorative characters with real symbols
-      const displayVrcName = this.replaceDecorativeCharactersToSymbol(inputVrcNameTrimmed);
+      const discordDisplayVrcName = this.replaceDecorativeCharactersToSymbol(inputVrcNameTrimmed);
 
       //reply
       let msg = '';
       switch (result) {
          case 'REGISTERED':
-            msg = 'Thanks you! I registered to "' + displayVrcName + '" as your VRChat display name.';
+            msg = 'Thanks you! I registered to "' + discordDisplayVrcName + '" as your VRChat display name.';
             if (vrcNameChangeLimitPerDay > 0) {
                msg += '\n(You can change your display name until ' + vrcNameChangeLimitPerDay + ' times per day)';
             }
             break;
          case 'CHANGED':
-            msg = 'Thanks you! I changed to "' + displayVrcName + '" as your display name.';
+            msg = 'Thanks you! I changed to "' + discordDisplayVrcName + '" as your display name.';
             if (vrcNameChangeLimitPerDay > 0) {
                msg += '\n(You can change your display name until ' + vrcNameChangeLimitPerDay + ' times per day)';
             }
@@ -711,7 +710,7 @@ export class DiscordProcess {
             }
             break;
          case 'SAME_VRC_NAME':
-            msg = '**Registration failed**\n"' + displayVrcName + '" is same of registered.';
+            msg = '**Registration failed**\n"' + discordDisplayVrcName + '" is same of registered.';
             break;
          case 'ERROR': //unkwnon error
             msg = '**Registration failed**\nUnkwnon error.';
@@ -725,21 +724,24 @@ export class DiscordProcess {
       }
    }
 
-   private replaceDecorativeCharactersToSymbol(input: string): string {
-      return input.replaceAll(`_`, '\\_').replaceAll(`*`, '\\*').replaceAll(`#`, '\\#')
-         .replaceAll(`-`, '\\-').replaceAll(`~`, '\\~').replaceAll(`\``, '\\\`').replaceAll(`|`, '\\|');
-   }
-
    async getVrcName(interaction: ChatInputCommandInteraction) {
       const guildId = interaction.guildId!;
       const userId = interaction.user.id!;
       const vrcName = await this.db.getVrcName(guildId, userId);
       if (vrcName) {
-         await interaction.reply({ content: 'Your VRChat name is: "' + vrcName + '"', ephemeral: true });
+         const discordDisplayVrcName = this.replaceDecorativeCharactersToSymbol(vrcName);
+         await interaction.reply({ content: 'Your VRChat name is: "' + discordDisplayVrcName + '"', ephemeral: true });
       } else {
          await interaction.reply({ content: 'You are not registered yet.\nPlese command "set_vrc_name" to regist.', ephemeral: true });
       }
    }
+
+   //Replace Discord's decorative characters with real symbols
+   private replaceDecorativeCharactersToSymbol(input: string): string {
+      return input.replaceAll(`_`, '\\_').replaceAll(`*`, '\\*').replaceAll(`#`, '\\#')
+         .replaceAll(`-`, '\\-').replaceAll(`~`, '\\~').replaceAll(`\``, '\\\`').replaceAll(`|`, '\\|');
+   }
+
 
    async sendVrcNameLog(interaction: ChatInputCommandInteraction) {
       const guildId = interaction.guildId!;
