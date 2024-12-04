@@ -726,8 +726,8 @@ export class DiscordProcess {
    }
 
    private replaceDecorativeCharactersToSymbol(input: string): string {
-      let result = input.replace(`_`, '\_');
-      return result;
+      return input.replaceAll(`_`, '\\_').replaceAll(`*`, '\\*').replaceAll(`#`, '\\#')
+         .replaceAll(`-`, '\\-').replaceAll(`~`, '\\~').replaceAll(`\``, '\\\`').replaceAll(`|`, '\\|');
    }
 
    async getVrcName(interaction: ChatInputCommandInteraction) {
