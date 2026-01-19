@@ -1,4 +1,4 @@
-# Udon Auto Lock (discord bot)
+# Udon Auto Lock (Discord bot)
 
 This is the Discord bot program of Udon Auto Lock.
 
@@ -16,7 +16,8 @@ You need to create two R2 buckets in Cloudflare:
 2. **Backup Private Bucket** - For backup data (private access)
    - By default, backups are created daily. It is recommended to configure "Object lifecycle rules" in R2 settings to automatically delete old backups after a certain period to optimize storage.
 
-_Note: R2 is a pay-as-you-go service._
+   > [!NOTE]
+   > R2 is a pay-as-you-go service.
 
 ### Set Environments
 
@@ -42,6 +43,7 @@ Please obtain the required tokens from each service in advance.
 
       Set your discord bot token string.
       Discord bot requires SERVER MEMBERS INTENT.
+
       ![image](/documents/images/bot_intent.png)
 
 ### Project launch
@@ -49,9 +51,11 @@ Please obtain the required tokens from each service in advance.
 - `git clone [GitHub URL]` to get this code.
 - `yarn` to get packages.
 - `yarn make_jwt_keys` to create RSA key pair for JSON Web Token.
-  _Note: Requires OpenSSL library._
+   > [!NOTE]
+   > Requires OpenSSL library.
 - `yarn generate_db` to generate new database by prisma.
-  _Note: This will delete old database and recreate the database._
+   > [!NOTE]
+   > This will delete old database and recreate the database.
 
 #### Run (development)
 
