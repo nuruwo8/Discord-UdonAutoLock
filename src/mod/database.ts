@@ -3,12 +3,23 @@ import { PrismaClient, Prisma, Setting } from '@prisma/client';
 import * as log from '@/src/mod/logger';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { CloudflareForBackup } from './cloudflare';
 
-export type RegistVrcNameResult = 'REGISTERED' | 'CHANGED' | 'REACH_LIMIT' | 'SAME_VRC_NAME' | 'ERROR'; // use as enum
+export type RegisterVrcNameResult = 'REGISTERED' | 'CHANGED' | 'REACH_LIMIT' | 'SAME_VRC_NAME' | 'ERROR'; // use as enum
 export type CommandResult = 'SUCCESS' | 'FAILED: CANT_FIND_TARGET' | 'ERROR'; // use as enum
 
+// DB backup retry settings
+const DB_BACKUP_RETRY_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
+const DB_BACKUP_RETRY_MAX_COUNT = 72; // 12 hours / 10 minutes = 72 retries
+
 export class Database {
-   constructor(private prisma: PrismaClient) {}
+   private cloudflareBackup: CloudflareForBackup;
+   private dbBackupRetryTimer: NodeJS.Timeout | null = null;
+   private dbBackupRetryCount = 0;
+
+   constructor(private prisma: PrismaClient) {
+      this.cloudflareBackup = new CloudflareForBackup();
+   }
 
    // -----------------------------define vrc display name token function----------------------
    /**
@@ -25,18 +36,18 @@ export class Database {
       }
    }
 
-   async getAllMembersVrcName(guildId: string): Promise<{ registedMembers: { [key: string]: string }; registedIds: string[] }> {
-      const registedMembers: { [key: string]: string } = {};
-      const registedIds: string[] = [];
+   async getAllMembersVrcName(guildId: string): Promise<{ registeredMembers: { [key: string]: string }; registeredIds: string[] }> {
+      const registeredMembers: { [key: string]: string } = {};
+      const registeredIds: string[] = [];
       const vrcNameList = await this.prisma.vrcNameList.findMany({
          where: { guildId },
          select: { userId: true, vrcName: true },
       });
       vrcNameList.forEach((val) => {
-         registedMembers[val.userId] = val.vrcName;
-         registedIds.push(val.userId);
+         registeredMembers[val.userId] = val.vrcName;
+         registeredIds.push(val.userId);
       });
-      return { registedMembers, registedIds };
+      return { registeredMembers, registeredIds };
    }
 
    async getFileName(guildId: string) {
@@ -127,12 +138,12 @@ export class Database {
    }
 
    /**
-    * Regist VRChat name. new or update.
+    * Register VRChat name. new or update.
     * @param userId
     * @param userName
     * @returns
     */
-   async vrcNameRegist(guildId: string, guildName: string, userId: string, userName: string, registVrcName: string): Promise<RegistVrcNameResult> {
+   async vrcNameRegister(guildId: string, guildName: string, userId: string, userName: string, registerVrcName: string): Promise<RegisterVrcNameResult> {
       const setting = await this.getSetting(guildId);
       const vrcNameChangeLimitPerDay = setting.vrcNameChangeLimitPerDay;
       return await this.prisma.$transaction(async (tx) => {
@@ -144,16 +155,16 @@ export class Database {
          });
          if (!vrcNameList) {
             // no vrcName. new name.
-            return await this.newVrcNameRegist(tx, guildId, guildName, userId, userName, registVrcName, vrcNameChangeLimitPerDay);
+            return await this.newVrcNameRegister(tx, guildId, guildName, userId, userName, registerVrcName, vrcNameChangeLimitPerDay);
          } else {
             // exist vrcName. change name.
-            return await this.changeVrcNameRegist(
+            return await this.changeVrcNameRegister(
                tx,
                guildId,
                guildName,
                userId,
                userName,
-               registVrcName,
+               registerVrcName,
                vrcNameList.vrcName,
                vrcNameList.lastChangeDay,
                vrcNameChangeLimitPerDay,
@@ -163,16 +174,16 @@ export class Database {
       });
    }
 
-   async newVrcNameRegist(
+   async newVrcNameRegister(
       tx: Prisma.TransactionClient,
       guildId: string,
       guildName: string,
       userId: string,
       userName: string,
-      registVrcName: string,
+      registerVrcName: string,
       vrcNameChangeLimitPerDay: number
-   ): Promise<RegistVrcNameResult> {
-      // no vrc name, new regist
+   ): Promise<RegisterVrcNameResult> {
+      // no vrc name, new register
       const { nowJst, todayJst } = getNowAndToDayJst();
       let logStatus = '';
       await tx.vrcNameList.create({
@@ -181,18 +192,18 @@ export class Database {
             guildName,
             userId,
             userName,
-            vrcName: registVrcName,
+            vrcName: registerVrcName,
             changeRemaining: vrcNameChangeLimitPerDay,
             lastChangeDay: todayJst,
          },
       });
-      logStatus = 'New regist vrc name ';
+      logStatus = 'New register VRChat name ';
 
       //log
       const data: log.VrcName = {
          guildName,
          userName,
-         vrcName: registVrcName,
+         vrcName: registerVrcName,
          status: logStatus,
          userId,
          changeRemaining: vrcNameChangeLimitPerDay,
@@ -203,28 +214,28 @@ export class Database {
       return 'REGISTERED';
    }
 
-   async changeVrcNameRegist(
+   async changeVrcNameRegister(
       tx: Prisma.TransactionClient,
       guildId: string,
       guildName: string,
       userId: string,
       userName: string,
-      registVrcName: string,
-      registedVrcName: string,
+      registerVrcName: string,
+      registeredVrcName: string,
       lastChangeDay: string,
       vrcNameChangeLimitPerDay: number,
       nowChangeRemaining: number
-   ): Promise<RegistVrcNameResult> {
+   ): Promise<RegisterVrcNameResult> {
       const { nowJst, todayJst } = getNowAndToDayJst();
       let changeRemaining = nowChangeRemaining;
       let logStatus = '';
-      //check vrc name and culc change remaining.
-      if (registedVrcName === registVrcName) {
+      //check vrc name and calc change remaining.
+      if (registeredVrcName === registerVrcName) {
          return 'SAME_VRC_NAME';
       } else {
          //change vrc name
          if (lastChangeDay === todayJst) {
-            logStatus = 'Vrc name changed';
+            logStatus = 'VRChat name is changed';
          } else {
             changeRemaining = vrcNameChangeLimitPerDay; //restrict mode is 0.
             logStatus = 'First change of today';
@@ -243,7 +254,7 @@ export class Database {
             guildName,
             userId,
             userName,
-            vrcName: registVrcName,
+            vrcName: registerVrcName,
             changeRemaining,
             lastChangeDay: todayJst,
          },
@@ -253,7 +264,7 @@ export class Database {
       const data: log.VrcName = {
          guildName,
          userName,
-         vrcName: registVrcName,
+         vrcName: registerVrcName,
          status: logStatus,
          userId,
          changeRemaining,
@@ -264,7 +275,7 @@ export class Database {
       return 'CHANGED';
    }
 
-   async checkVrcNameRegisted(guildId: string, userId: string) {
+   async checkVrcNameRegistered(guildId: string, userId: string) {
       const vrcNameList = await this.prisma.vrcNameList.findUnique({
          where: {
             guildId_userId: { guildId, userId },
@@ -289,7 +300,7 @@ export class Database {
             },
          });
 
-         const logStatus = 'bot is leaved from guild';
+         const logStatus = 'bot is left from guild';
          //log
          const data: log.Text = {
             guildName: textLinks.guildName,
@@ -318,7 +329,7 @@ export class Database {
             },
          });
 
-         const logStatus = 'vrc name is deleted';
+         const logStatus = 'VRChat name is deleted';
          //log
          const data: log.VrcName = {
             guildName,
@@ -335,15 +346,48 @@ export class Database {
       });
    }
 
-   backUpDatabase() {
+   async backUpDatabase() {
       const nowJst = getNowJst();
-      const originalDbPath = path.resolve() + '/main.db';
-      const folderPath = path.resolve('backup');
-      if (!fs.existsSync(folderPath)) {
-         fs.mkdirSync(folderPath);
+      const originalDbPath = path.join(path.resolve(), 'main.db');
+      const buffer = fs.readFileSync(originalDbPath);
+      const backUpDbFileName = 'main_bk_' + nowJst + '.db';
+      const result = await this.cloudflareBackup.uploadDataBaseBackup(backUpDbFileName, buffer);
+
+      if (result) {
+         // success: clear retry timer
+         if (this.dbBackupRetryTimer) {
+            clearTimeout(this.dbBackupRetryTimer);
+            this.dbBackupRetryTimer = null;
+         }
+         if (this.dbBackupRetryCount > 0) {
+            log.operation.info(`DB backup succeeded after ${this.dbBackupRetryCount} retries`);
+         }
+         this.dbBackupRetryCount = 0;
+      } else {
+         // failed: schedule retry
+         this.scheduleBackupRetry();
       }
-      const backUpDbPath = folderPath + '/main_bk_' + nowJst + '.db';
-      fs.copyFileSync(originalDbPath, backUpDbPath);
+
+      return;
+   }
+
+   private scheduleBackupRetry(): void {
+      // already retrying, timer is running
+      if (this.dbBackupRetryTimer) return;
+
+      if (this.dbBackupRetryCount >= DB_BACKUP_RETRY_MAX_COUNT) {
+         log.operation.error(`DB backup failed after ${DB_BACKUP_RETRY_MAX_COUNT} retries (12 hours). Giving up.`);
+         this.dbBackupRetryCount = 0;
+         return;
+      }
+
+      log.operation.warn(`DB backup failed. Will retry in 10 minutes (attempt ${this.dbBackupRetryCount + 1}/${DB_BACKUP_RETRY_MAX_COUNT})`);
+
+      this.dbBackupRetryTimer = setTimeout(async () => {
+         this.dbBackupRetryTimer = null;
+         this.dbBackupRetryCount++;
+         await this.backUpDatabase();
+      }, DB_BACKUP_RETRY_INTERVAL_MS);
    }
 
    async cleanupTextLinkGuilds(nowGuildIds: string[]) {
@@ -357,7 +401,7 @@ export class Database {
             dbGuildIds.push(element.guildId);
          });
          //delete no exist guilds
-         const nonExistGuilds = dbGuildIds.filter((guildId) => nowGuildIds.indexOf(guildId) == -1);
+         const nonExistGuilds = dbGuildIds.filter((guildId) => !nowGuildIds.includes(guildId));
          const deletes = async () => {
             for (const guildId of nonExistGuilds) {
                await tx.textLinks.deleteMany({
@@ -366,7 +410,7 @@ export class Database {
             }
          };
          await deletes();
-         //text link automatycally adding. so not create.
+         //text link automatically adding. so not create.
       });
    }
 
@@ -382,7 +426,7 @@ export class Database {
             dbGuildIds.push(element.guildId);
          });
          //delete no exist guilds
-         const nonExistGuilds = dbGuildIds.filter((guildId) => nowGuildIds.indexOf(guildId) == -1);
+         const nonExistGuilds = dbGuildIds.filter((guildId) => !nowGuildIds.includes(guildId));
          const deletes = async () => {
             for (const guildId of nonExistGuilds) {
                await tx.vrcNameList.deleteMany({
@@ -418,12 +462,12 @@ export class Database {
          //add settings
          const newGuilds: { [key: string]: string } = {};
          for (const [key, value] of Object.entries(nowGuildInfos)) {
-            if (dbGuildIds.indexOf(key) == -1) {
+            if (!dbGuildIds.includes(key)) {
                newGuilds[key] = value;
             }
          }
          for (const [key, value] of Object.entries(newGuilds)) {
-            if (dbGuildIds.indexOf(key) == -1) {
+            if (!dbGuildIds.includes(key)) {
                await tx.setting.create({
                   data: {
                      guildId: key,
@@ -517,7 +561,7 @@ export class Database {
       });
    }
 
-   async createDefaltGuildSettingIfNone(guildId: string, guildName: string, defaultSetting: Setting) {
+   async createDefaultGuildSettingIfNone(guildId: string, guildName: string, defaultSetting: Setting) {
       await this.prisma.$transaction(async (tx) => {
          const count = await tx.setting.count({
             where: {

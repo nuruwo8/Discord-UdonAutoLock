@@ -26,7 +26,7 @@ model VrcNameList {
 model TextLinks {
   guildId    String @id @map("guild_id")
   guildName  String @map("guild_name")
-  fileName   String @unique @map("fileName")
+  fileName   String @unique @map("file_name")
   textLink   String @unique @map("text_link")
   createDate String @map("create_date")
   updateDate String @map("update_date")

@@ -1,28 +1,5 @@
 import { Database } from '@/src/mod/database';
 import { Setting } from '@prisma/client';
-import * as fs from 'node:fs';
-import * as path from 'node:path';
-
-/*--------------------------------global settings type (static)---------------------------------------------*/
-type GeneralSettings = {
-   DATA_UPDATE_CHECK_INTERVAL_SEC: number;
-   TOKEN_EXPIRE_PERIOD_SEC: number;
-};
-type FireBaseSettings = {
-   BUCKET_NAME: string;
-   FILE_ROOT_PATH: string;
-};
-
-type GLOBAL_SETTINGS = {
-   GENERAL: GeneralSettings;
-   FIREBASE: FireBaseSettings;
-};
-
-const jsonPath = path.resolve('settings') + '/setting.json';
-const jsonFile = fs.readFileSync(jsonPath, 'utf8').trim();
-
-//read settings from Json file.
-export const GLOBAL_SETTING = JSON.parse(jsonFile) as GLOBAL_SETTINGS;
 
 /*--------------------------------guild settings (class instance)---------------------------------------------*/
 export type SETTING_RESULT = 'SUCCESS:' | 'FAILED: NO_SETTING_ON_THIS_GUILD' | 'FAILED: VALUE_IS_NOT_A_NUMBER' | 'FAILED: VALUE_RANGE_IS_WRONG (Valid is between 0 to 100)' | 'ERROR'; // use as enum
@@ -41,7 +18,7 @@ export class SettingAdapter {
    readonly DEFAULT_SETTING: Setting;
    /*-------------------------set settings functions. Call by bot commands ----------------------------------*/
    async createGuildDefaultSettingIfNone(guildId: string, guildName: string) {
-      await this.db.createDefaltGuildSettingIfNone(guildId, guildName, this.DEFAULT_SETTING);
+      await this.db.createDefaultGuildSettingIfNone(guildId, guildName, this.DEFAULT_SETTING);
    }
 
    async setGuildVrcNameChangeLimitPerDay(guildId: string, limit: string): Promise<{ result: SETTING_RESULT; value: number }> {
@@ -59,11 +36,11 @@ export class SettingAdapter {
    }
 
    async getGuildSettingResult(guildId: string): Promise<{ result: SETTING_RESULT; value: string }> {
-      const seting = await this.db.getSetting(guildId);
-      if (!seting) {
+      const setting = await this.db.getSetting(guildId);
+      if (!setting) {
          return { result: 'FAILED: NO_SETTING_ON_THIS_GUILD', value: '' };
       }
-      let settingSt = 'vrc_name_change_limit_per_day: ' + seting.vrcNameChangeLimitPerDay;
+      let settingSt = 'vrc_name_change_limit_per_day: ' + setting.vrcNameChangeLimitPerDay;
       return { result: 'SUCCESS:', value: settingSt };
    }
 

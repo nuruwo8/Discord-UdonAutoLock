@@ -3,8 +3,8 @@ import * as path from 'node:path';
 import * as fs from 'node:fs';
 
 //------------------------define jwt Keys-------------------------
-const privateKey = fs.readFileSync(path.resolve('settings', 'private', 'jwt') + '/private_key.pem');
-const publicKey = fs.readFileSync(path.resolve('settings', 'private', 'jwt') + '/public_key.pem').toString();
+const privateKey = fs.readFileSync(path.join(path.resolve('settings', 'private', 'jwt'), 'private_key.pem'));
+const publicKey = fs.readFileSync(path.join(path.resolve('settings', 'private', 'jwt'), 'public_key.pem')).toString();
 
 //------------------------define jwt token generate functions-------------------------
 export function getJwtToken(dataHash: string, exp: number): string {

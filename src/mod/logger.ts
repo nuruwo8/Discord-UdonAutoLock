@@ -3,10 +3,10 @@ import * as csv from 'csv-stringify/sync';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
-//----------------------opration rogger-----------------------
+//----------------------opration logger-----------------------
 
 const operationLogPath = path.resolve('logs');
-const operationLogFileName = operationLogPath + '/operation_log.txt';
+const operationLogFileName = path.join(operationLogPath, 'operation_log.txt');
 
 Log4js.configure({
    appenders: {
@@ -64,6 +64,10 @@ let logGuilds: string[] = [];
  * @param channelId
  */
 function makeChannelLogPathAndFiles(guildId: string) {
+   // Path traversal prevention
+   if (guildId.includes('..') || guildId.includes('/') || guildId.includes('\\')) {
+      throw new Error(`Invalid guildId: ${guildId}`);
+   }
    const logsFilePath = path.resolve('logs');
    if (!fs.existsSync(logsFilePath)) {
       fs.mkdirSync(logsFilePath);
@@ -91,23 +95,23 @@ function makeChannelLogPathAndFiles(guildId: string) {
 }
 
 export function getVrcNameLogPath(guildId: string): string {
-   return path.resolve('logs', 'guilds', guildId) + '/vrc_name_log.csv';
+   return path.join(path.resolve('logs', 'guilds', guildId), 'vrc_name_log.csv');
 }
 
 function getCommandLogPath(guildId: string): string {
-   return path.resolve('logs', 'guilds', guildId) + '/command_log.csv';
+   return path.join(path.resolve('logs', 'guilds', guildId), 'command_log.csv');
 }
 
 function getTextLogPath(guildId: string): string {
-   return path.resolve('logs', 'guilds', guildId) + '/text_log.csv';
+   return path.join(path.resolve('logs', 'guilds', guildId), 'text_log.csv');
 }
 
 /**
- * create write log steream for each channel. Stream make as interval write mode to decrease disk access.
+ * create write log stream for each channel. Stream make as interval write mode to decrease disk access.
  * @param guildId
  */
 export function openCsvLogStream(guildId: string) {
-   if (logGuilds.indexOf(guildId) != -1) return; //already exist
+   if (logGuilds.includes(guildId)) return; //already exist
    //make files
    makeChannelLogPathAndFiles(guildId);
    //make streams
@@ -130,7 +134,7 @@ export function openCsvLogStream(guildId: string) {
  * @param guildId
  */
 export function closeCsvLogStream(guildId: string) {
-   if (logGuilds.indexOf(guildId) == -1) return; //not exist
+   if (!logGuilds.includes(guildId)) return; //not exist
    commandLog[guildId].end();
    vrcNameLog[guildId].end();
    textLog[guildId].end();
@@ -161,7 +165,7 @@ function closeAllCsvLogStream() {
  * @param log
  */
 export function writeCommand(log: Command) {
-   if (logGuilds.indexOf(log.guildId) == -1) return; //not exist
+   if (!logGuilds.includes(log.guildId)) return; //not exist
    log.guildName = log.guildName.replace(',', '.');
    log.note = log.note.replace(',', '.');
    log.command = log.command.replace(',', '.');
@@ -171,7 +175,7 @@ export function writeCommand(log: Command) {
 }
 
 export function writeVrcName(log: VrcName) {
-   if (logGuilds.indexOf(log.guildId) == -1) return; //not exist
+   if (!logGuilds.includes(log.guildId)) return; //not exist
    log.status = log.status.replace(',', '.');
    log.guildName = log.guildName.replace(',', '.');
    log.userName = log.userName.replace(',', '.');
@@ -180,19 +184,19 @@ export function writeVrcName(log: VrcName) {
 }
 
 export function writeText(log: Text) {
-   if (logGuilds.indexOf(log.guildId) == -1) return; //not exist
+   if (!logGuilds.includes(log.guildId)) return; //not exist
    log.status = log.status.replace(',', '.');
    log.guildName = log.guildName.replace(',', '.');
    textLog[log.guildId].write('=' + csv.stringify([log], { delimiter: ',=', header: false, quoted: true }));
 }
 
 //---------------------------------
-// Log data is fulshed per 10sec. one stream flush interval is depend on channel number.
+// Log data is flushed per 10sec. one stream flush interval is depend on channel number.
 //---------------------------------
 const LOGGER_KIND_NUM = 3;
 let logKindCounter = 0;
 let guildCounter = 0;
-let logflushIntarvalTimer = setInterval(() => {
+let logflushIntervalTimer = setInterval(() => {
    if (logGuilds.length > 0) {
       let logSt: fs.WriteStream | null = null;
       if (logKindCounter >= LOGGER_KIND_NUM) {
@@ -224,7 +228,7 @@ let logflushIntarvalTimer = setInterval(() => {
  * require call when process is end.
  */
 export function logProcessEnd() {
-   clearInterval(logflushIntarvalTimer);
+   clearInterval(logflushIntervalTimer);
    closeAllCsvLogStream();
 }
 

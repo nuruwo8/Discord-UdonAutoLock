@@ -135,9 +135,6 @@ main.db-journal
 # log files
 .logs/
 
-# setting files
-/settings/setting.json
-
 # backup files
 /backup
 

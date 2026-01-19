@@ -5,12 +5,14 @@ import { Database } from '@/src/mod/database';
 import { DiscordProcess } from '@/src/mod/discord_process';
 import { SettingAdapter } from '@/src/mod/setting_adapter';
 import * as cron from 'node-cron';
-import { Firebase } from '@/src/mod/firebase_storage';
+import { CloudflareForWorld } from '@/src/mod/cloudflare';
 
 //----------------------    run   -------------------------
 (async () => {
-   //unchatch root exception
-   process.on('uncaughtException', (err) => {
+   let prisma: PrismaClient;
+
+   //uncaught root exception
+   process.on('uncaughtException', async (err) => {
       if (err.name.startsWith('DiscordAPIError[50013]')) {
          //discord permission error. but not fatal error.
          const msg = err.name + ' Missing Permissions.';
@@ -28,6 +30,7 @@ import { Firebase } from '@/src/mod/firebase_storage';
       //fatal error.
       console.error(err, 'Uncaught Exception thrown');
       operation.fatal(err);
+      await prisma?.$disconnect();
       shutdownAfterLogFlush();
    });
 
@@ -46,29 +49,30 @@ import { Firebase } from '@/src/mod/firebase_storage';
       });
    }
 
-   process.on('SIGINT', function () {
+   process.on('SIGINT', async function () {
+      await prisma?.$disconnect();
       discordProcess.endProgramProcess('process exit by detect ctrl + c.');
    });
 
    //make exists guild logger
    operation.info('launch program');
-   const prisma = new PrismaClient();
+   prisma = new PrismaClient();
 
    //connect db
    const db = new Database(prisma);
    const settingAdapter = new SettingAdapter(db);
 
-   //get firebase
-   const fireBase = new Firebase(db);
+   //get cloudflare
+   const cloudflare = new CloudflareForWorld(db);
 
    //set discord and set interval
-   const discordProcess = new DiscordProcess(db, settingAdapter, fireBase);
+   const discordProcess = new DiscordProcess(db, settingAdapter, cloudflare);
 
    //backup database at 24:00 every day.
    cron.schedule('0 0 0 * * *', () => db.backUpDatabase());
 
-   //db back up when lunch
-   db.backUpDatabase();
+   //db back up when launch
+   await db.backUpDatabase();
 
    //bot start
    discordProcess.start();
