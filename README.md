@@ -16,8 +16,8 @@ You need to create two R2 buckets in Cloudflare:
 2. **Backup Private Bucket** - For backup data (private access)
    - By default, backups are created daily. It is recommended to configure "Object lifecycle rules" in R2 settings to automatically delete old backups after a certain period to optimize storage.
 
-   > [!NOTE]
-   > R2 is a pay-as-you-go service.
+> [!NOTE]
+> R2 is a pay-as-you-go service.
 
 ### Set Environments
 
@@ -51,11 +51,14 @@ Please obtain the required tokens from each service in advance.
 - `git clone [GitHub URL]` to get this code.
 - `yarn` to get packages.
 - `yarn make_jwt_keys` to create RSA key pair for JSON Web Token.
-   > [!NOTE]
-   > Requires OpenSSL library.
+
+> [!NOTE]
+> Requires OpenSSL library.
+
 - `yarn generate_db` to generate new database by prisma.
-   > [!NOTE]
-   > This will delete old database and recreate the database.
+
+> [!NOTE]
+> This will delete old database and recreate the database.
 
 #### Run (development)
 
