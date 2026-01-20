@@ -1,6 +1,6 @@
 {
    "name": "discord-udon-auto-lock",
-   "version": "1.0.0",
+   "version": "2.0.0",
    "description": "Discord Bot for VRChat Udon Auto Lock System",
    "main": ".build/main.js",
    "scripts": {
