@@ -66,5 +66,5 @@ Please obtain the required tokens from each service in advance.
 
 #### Build and run (production)
 
-- `yarn build` to compile typescript code to javascript.
+- `yarn build` to compile typescript code to javascript
 - `yarn start` to launch javascript code.
