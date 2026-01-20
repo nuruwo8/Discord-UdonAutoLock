@@ -164,8 +164,8 @@ export class CloudflareForBackup {
       this.botR2SeparatePath = env.r2.botSeparatePath;
    }
 
-   public async uploadDataBaseBackup(fileName: string, dbData: Buffer | string | Uint8Array): Promise<boolean> {
-      const r2FileKey = this.botR2SeparatePath + fileName;
+   public async uploadDataBaseBackupDatabase(fileName: string, dbData: Buffer | string | Uint8Array): Promise<boolean> {
+      const r2FileKey = this.botR2SeparatePath + 'database/' + fileName;
       return await this.putObject(r2FileKey, dbData);
    }
 

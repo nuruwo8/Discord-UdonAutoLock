@@ -351,7 +351,7 @@ export class Database {
       const originalDbPath = path.join(path.resolve(), 'main.db');
       const buffer = fs.readFileSync(originalDbPath);
       const backUpDbFileName = 'main_bk_' + nowJst + '.db';
-      const result = await this.cloudflareBackup.uploadDataBaseBackup(backUpDbFileName, buffer);
+      const result = await this.cloudflareBackup.uploadDataBaseBackupDatabase(backUpDbFileName, buffer);
 
       if (result) {
          // success: clear retry timer
