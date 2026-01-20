@@ -21,7 +21,7 @@ export class CloudflareForWorld {
 
    constructor(private db: Database) {
       //read parameter from env
-      this.botR2SeparatePath = env.r2.botR2SeparatePath;
+      this.botR2SeparatePath = env.r2.botSeparatePath;
 
       this.r2 = {
          client: new S3Client({
@@ -161,7 +161,7 @@ export class CloudflareForBackup {
          }),
          bucketName: env.r2.backupPrivate.bucketName,
       };
-      this.botR2SeparatePath = env.r2.botR2SeparatePath;
+      this.botR2SeparatePath = env.r2.botSeparatePath;
    }
 
    public async uploadDataBaseBackup(fileName: string, dbData: Buffer | string | Uint8Array): Promise<boolean> {

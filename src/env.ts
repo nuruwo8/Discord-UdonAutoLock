@@ -31,7 +31,7 @@ type Env = {
       tokenExpirePeriodSec: number;
    };
    r2: {
-      botR2SeparatePath: string;
+      botSeparatePath: string;
       vrcPublic: R2Config & { baseUrl: string };
       backupPrivate: R2Config;
    };
@@ -50,7 +50,7 @@ export const env: Env = {
       tokenExpirePeriodSec: readEnvNumber('TOKEN_EXPIRE_PERIOD_SEC'),
    },
    r2: {
-      botR2SeparatePath: readEnvString('R2_BOT_SEPARATE_PATH'),
+      botSeparatePath: readEnvString('R2_BOT_SEPARATE_PATH'),
       vrcPublic: {
          baseUrl: readEnvString('R2_VRC_BASE_URL'),
          bucketName: readEnvString('R2_VRC_BUCKET_NAME'),
