@@ -14,7 +14,7 @@ You need to create two R2 buckets in Cloudflare:
 1. **VRC Public Bucket** - For VRChat World token (public access)
    - Set up a public domain for this bucket. Purchasing the domain through Cloudflare Registrar is recommended for easier management.
 2. **Backup Private Bucket** - For backup data (private access)
-   - By default, backups are created every 8 hours. It is recommended to configure "Object lifecycle rules" in R2 settings to automatically delete old backups after a certain period (e.g., 30 days) to optimize storage.
+   - Backups are created at the configured interval. It is recommended to configure "Object lifecycle rules" in R2 settings to automatically delete old backups after a certain period (e.g., 30 days) to optimize storage.
 
 > [!NOTE]
 > R2 is a pay-as-you-go service.
