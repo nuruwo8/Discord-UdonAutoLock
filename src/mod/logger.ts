@@ -3,7 +3,7 @@ import * as csv from 'csv-stringify/sync';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
-//----------------------opration logger-----------------------
+//----------------------operation logger-----------------------
 
 const operationLogPath = path.resolve('logs');
 const operationLogFileName = path.join(operationLogPath, 'operation_log.txt');
@@ -196,7 +196,7 @@ export function writeText(log: Text) {
 const LOGGER_KIND_NUM = 3;
 let logKindCounter = 0;
 let guildCounter = 0;
-let logflushIntervalTimer = setInterval(() => {
+let logFlushIntervalTimer = setInterval(() => {
    if (logGuilds.length > 0) {
       let logSt: fs.WriteStream | null = null;
       if (logKindCounter >= LOGGER_KIND_NUM) {
@@ -228,7 +228,7 @@ let logflushIntervalTimer = setInterval(() => {
  * require call when process is end.
  */
 export function logProcessEnd() {
-   clearInterval(logflushIntervalTimer);
+   clearInterval(logFlushIntervalTimer);
    closeAllCsvLogStream();
 }
 
