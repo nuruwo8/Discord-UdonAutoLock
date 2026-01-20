@@ -11,11 +11,29 @@ function readEnvString(key: string): string {
 }
 
 function readEnvNumber(key: string): number {
-   const num = parseInt(readEnvString(key), 10);
+   const num = Number(readEnvString(key));
    if (Number.isNaN(num)) {
       throw new Error(`Environment variable ${key} is not a valid number`);
    }
    return num;
+}
+
+function readEnvInteger(key: string): number {
+   const num = readEnvNumber(key);
+   if (!Number.isInteger(num)) {
+      throw new Error(`Environment variable ${key} must be an integer`);
+   }
+   return num;
+}
+
+type BackupPeriodUnit = 'hours' | 'days';
+
+function readEnvBackupPeriodUnit(key: string): BackupPeriodUnit {
+   const value = readEnvString(key);
+   if (value !== 'hours' && value !== 'days') {
+      throw new Error(`Environment variable ${key} must be 'hours' or 'days'`);
+   }
+   return value;
 }
 
 type R2Config = {
@@ -29,6 +47,8 @@ type Env = {
    general: {
       dataUpdateCheckIntervalSec: number;
       tokenExpirePeriodSec: number;
+      dataBackupPeriodUnit: BackupPeriodUnit;
+      dataBackupPeriodValue: number;
    };
    r2: {
       botSeparatePath: string;
@@ -46,8 +66,10 @@ type Env = {
 
 export const env: Env = {
    general: {
-      dataUpdateCheckIntervalSec: readEnvNumber('DATA_UPDATE_CHECK_INTERVAL_SEC'),
-      tokenExpirePeriodSec: readEnvNumber('TOKEN_EXPIRE_PERIOD_SEC'),
+      dataUpdateCheckIntervalSec: readEnvInteger('DATA_UPDATE_CHECK_INTERVAL_SEC'),
+      tokenExpirePeriodSec: readEnvInteger('TOKEN_EXPIRE_PERIOD_SEC'),
+      dataBackupPeriodUnit: readEnvBackupPeriodUnit('DATA_BACKUP_PERIOD_UNIT'),
+      dataBackupPeriodValue: readEnvInteger('DATA_BACKUP_PERIOD_VALUE'),
    },
    r2: {
       botSeparatePath: readEnvString('R2_BOT_SEPARATE_PATH'),

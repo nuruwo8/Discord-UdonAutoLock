@@ -1,5 +1,6 @@
 import { formatInTimeZone } from 'date-fns-tz';
 import * as crypto from 'node:crypto';
+import { env } from '@/src/env';
 
 // -----------------------------get time----------------------
 const FORMAT_SEC = 'yyyy-MM-dd HH-mm-ss';
@@ -37,4 +38,22 @@ export async function sha256hashAsync(input: string | Uint8Array) {
    }
    const digest = await crypto.subtle.digest('SHA-256', uint8Data);
    return Buffer.from(digest);
+}
+
+// -----------------------------backup cron expression----------------------
+export function getBackupCronExpr(): string {
+   const unit = env.general.dataBackupPeriodUnit;
+   const value = env.general.dataBackupPeriodValue;
+   switch (unit) {
+      case 'hours':
+         if (value < 1 || value > 23) {
+            throw new Error(`DATA_BACKUP_PERIOD_VALUE must be 1-23 for hours, got ${value}`);
+         }
+         return `0 0 */${value} * * *`;
+      case 'days':
+         if (value < 1 || value > 31) {
+            throw new Error(`DATA_BACKUP_PERIOD_VALUE must be 1-31 for days, got ${value}`);
+         }
+         return `0 0 0 */${value} * *`;
+   }
 }

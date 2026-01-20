@@ -6,6 +6,7 @@ import { DiscordProcess } from '@/src/mod/discord_process';
 import { SettingAdapter } from '@/src/mod/setting_adapter';
 import * as cron from 'node-cron';
 import { CloudflareForWorld } from '@/src/mod/cloudflare';
+import { getBackupCronExpr } from '@/src/mod/utility';
 
 //----------------------    run   -------------------------
 (async () => {
@@ -68,8 +69,8 @@ import { CloudflareForWorld } from '@/src/mod/cloudflare';
    //set discord and set interval
    const discordProcess = new DiscordProcess(db, settingAdapter, cloudflare);
 
-   //backup database every 8 hours.
-   cron.schedule('0 0 */8 * * *', () => db.backUpDatabase());
+   //backup database periodically
+   cron.schedule(getBackupCronExpr(), async () => await db.backUpDatabase());
 
    //db back up when launch
    await db.backUpDatabase();
