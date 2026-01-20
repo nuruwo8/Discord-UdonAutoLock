@@ -49,13 +49,13 @@ Please obtain the required tokens from each service in advance.
 ### Project launch
 
 - `git clone [GitHub URL]` to get this code.
-- `yarn` to get packages.
-- `yarn make_jwt_keys` to create RSA key pair for JSON Web Token.
+- `yarn install` to get packages.
+- `yarn make-jwt-keys` to create RSA key pair for JSON Web Token.
 
 > [!NOTE]
 > Requires OpenSSL library.
 
-- `yarn generate_db` to generate new database by prisma.
+- `yarn generate-db` to generate new database by prisma.
 
 > [!NOTE]
 > This will delete old database and recreate the database.

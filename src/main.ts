@@ -42,14 +42,6 @@ import { getBackupCronExpr } from '@/src/mod/utility';
       console.log(exitCodeMessage);
    });
 
-   // for catch ctrl+c exit
-   if (process.platform === 'win32') {
-      const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-      rl.on('SIGINT', function () {
-         process.emit('SIGINT');
-      });
-   }
-
    process.on('SIGINT', async function () {
       await prisma?.$disconnect();
       discordProcess.endProgramProcess('process exit by detect ctrl + c.');
