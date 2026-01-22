@@ -197,7 +197,7 @@ export class Database {
             lastChangeDay: todayJst,
          },
       });
-      logStatus = 'New register VRChat name ';
+      logStatus = `New register VRChat name: {${registerVrcName}}`;
 
       //log
       const data: log.VrcName = {
@@ -235,10 +235,10 @@ export class Database {
       } else {
          //change vrc name
          if (lastChangeDay === todayJst) {
-            logStatus = 'VRChat name is changed';
+            logStatus = `VRChat name is changed: {${registeredVrcName}} to {${registerVrcName}}`;
          } else {
             changeRemaining = vrcNameChangeLimitPerDay; //restrict mode is 0.
-            logStatus = 'First change of today';
+            logStatus = `VRChat name is changed. first of today:  {${registeredVrcName}} to {${registerVrcName}}`;
          }
       }
       if (--changeRemaining < 0) {
@@ -329,12 +329,14 @@ export class Database {
             },
          });
 
-         const logStatus = 'VRChat name is deleted';
+         const vrcName = vrcNameList.vrcName;
+         const logStatus = `VRChat name is deleted: {${vrcName}}`;
+
          //log
          const data: log.VrcName = {
             guildName,
             userName,
-            vrcName: vrcNameList.vrcName,
+            vrcName: vrcName,
             status: logStatus,
             userId,
             changeRemaining: 0,
